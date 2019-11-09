@@ -1,0 +1,37 @@
+esphome:
+  name: my_project
+  platform: ESP8266
+  board: d1_mini
+  includes:
+    - LM75A.h
+
+wifi:
+  ssid: "my_wifi_name"
+  password: "my_wifi_passwd"
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: "my_passwd"
+
+ota:
+  password: "my_passwd"
+
+i2c:
+  - id: bus_a
+    sda: 4
+    scl: 5
+    scan: True
+    
+sensor:    
+  - platform: custom
+    lambda: |-
+     auto lm75a = new LM75A();
+     App.register_component(lm75a);
+     return {lm75a};
+    sensors:
+      name: "LM75A"
+      unit_of_measurement: °C
+      accuracy_decimals: 1

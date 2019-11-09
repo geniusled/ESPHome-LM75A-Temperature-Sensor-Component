@@ -1,91 +1,40 @@
-/*
- * \brief I2C LM75A temperature sensor library (implementation)
- *
- * \author Quentin Comte-Gaz <quentin@comte-gaz.com>
- * \date 8 July 2016 & 14 January 2018
- * \license MIT License (contact me if too restrictive)
- * \copyright Copyright (c) 2016 Quentin Comte-Gaz
- * \version 1.1
- */
-
+#include "esphome.h"
+#include "esphome/core/log.h"
 #include "LM75A.h"
-#include <Wire.h>
 
-namespace LM75AConstValues
-{
+#define INVALID_LM75A_TEMPERATURE 1000
 
-const int LM75A_BASE_ADDRESS = 0x48;
+namespace esphome {
+namespace sensor {
 
-const float LM75A_DEGREES_RESOLUTION = 0.125;
-
-const int LM75A_REG_ADDR_TEMP = 0;
-//const int LM75A_REG_ADDR_CONF = 1;  // Not used for now
-//const int LM57A_REG_ADDR_THYST = 2; // Not used for now
-//const int LM57A_REG_ADDR_TOS = 3;   // Not used for now
-
-}
-
-using namespace LM75AConstValues;
-
-LM75A::LM75A(bool A0_value, bool A1_value, bool A2_value)
-{
-  _i2c_device_address = LM75A_BASE_ADDRESS;
-
-  if (A0_value) {
-    _i2c_device_address += 1;
-  }
-
-  if (A1_value) {
-    _i2c_device_address += 2;
-  }
-
-  if (A2_value) {
-    _i2c_device_address += 4;
-  }
-
+static const char *TAG = "LM75A";
+static const int LM75A_BASE_ADDRESS = 0x48;
+static const float LM75A_DEGREES_RESOLUTION = 0.125;
+static const int LM75A_REG_ADDR_TEMP = 0;
+     
+void LM75A::setup() {
+  ESP_LOGCONFIG(TAG, "Setting up LM75A...");
   Wire.begin();
 }
-
-float LM75A::fahrenheitToDegrees(float temperature_in_fahrenheit)
-{
-  return ((temperature_in_fahrenheit - 32.0) / 1.8);
-}
-
-float LM75A::degreesToFahrenheit(float temperature_in_degrees)
-{
-  return ((temperature_in_degrees * 1.8) + 32.0);
-}
-
-float LM75A::getTemperatureInFahrenheit() const
-{
-  float temperature_in_degrees = getTemperatureInDegrees();
-
-  if (temperature_in_degrees == INVALID_LM75A_TEMPERATURE) {
-    return INVALID_LM75A_TEMPERATURE;
-  }
-
-  return degreesToFahrenheit(temperature_in_degrees);
-}
-
-float LM75A::getTemperatureInDegrees() const
-{
+  
+void LM75A::update() {
   uint16_t real_result = INVALID_LM75A_TEMPERATURE;
   uint16_t i2c_received = 0;
 
   // Go to temperature data register
-  Wire.beginTransmission(_i2c_device_address);
+  Wire.beginTransmission(LM75A_BASE_ADDRESS);
   Wire.write(LM75A_REG_ADDR_TEMP);
   if(Wire.endTransmission()) {
-    // Transmission error
-    return real_result;
+    ESP_LOGD(TAG, "Transmission error.");
+    return;
   }
 
   // Get content
-  if (Wire.requestFrom(_i2c_device_address, 2)) {
+  if (Wire.requestFrom(LM75A_BASE_ADDRESS, 2)) {
     Wire.readBytes((uint8_t*)&i2c_received, 2);
   } else {
-    // Can't read temperature
-    return real_result;
+    ESP_LOGD(TAG, "Can't read temperature.");
+    return;
   }
 
   // Modify the value (only 11 MSB are relevant if swapped)
@@ -105,10 +54,12 @@ float LM75A::getTemperatureInDegrees() const
     refactored_value |= 0xf800;
     refactored_value = ~refactored_value + 1;
     real_value = (float)refactored_value * (-1) * LM75A_DEGREES_RESOLUTION;
-  }
-  else {
+  } else {
     real_value = (float)refactored_value *  LM75A_DEGREES_RESOLUTION;
   }
 
-  return real_value;
+  ESP_LOGD(TAG, "Got Temperature=%.1f°C", real_value);
+  publish_state(real_value);
+} 
+}
 }
