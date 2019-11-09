@@ -12,8 +12,13 @@
 
 4) Copy _LM75A.h_ file to the same folder as _my\_project.yaml_.
 
-5) Add _sensor_ section to _my_project.yaml_ file.
+5) Add _I2C_ and _sensor_ sections to _my_project.yaml_ file.
 ```
+i2c:
+  - id: bus_a
+    sda: 4
+    scl: 5
+    scan: True
 sensor:    
   - platform: custom
     lambda: |-
