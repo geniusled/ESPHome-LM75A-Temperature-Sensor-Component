@@ -12,7 +12,15 @@
 
 4) Copy _LM75A.h_ file to the same folder as _my\_project.yaml_.
 
-5) Add _I2C_ and _sensor_ sections to _my_project.yaml_ file.
+5) Edit _my_project.yaml_ file.
+
+Add _includes_ subsection of _esphome_.
+```
+esphome:
+  includes:
+    - LM75A.h
+```
+Add _I2C_ and _sensor_ sections to end of file.
 ```
 i2c:
   - id: bus_a
