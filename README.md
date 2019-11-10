@@ -33,6 +33,9 @@ sensor:
 
 6) Compile and upload project: `esphome my_project.yaml run`
 
+## How to connect the sensor
+<img src="schematics.png" width="400">
+
 ## License
 
 This project is under MIT license. This means you can use it as you want (just don't delete the library header).
